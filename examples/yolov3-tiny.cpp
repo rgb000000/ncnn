@@ -18,6 +18,19 @@
 
 #define MAX_STRIDE 64
 
+
+extern char _img1_start;
+extern char _img1_end;
+
+extern char _img2_start;
+extern char _img2_end;
+
+extern char _param_start;
+extern char _param_end;
+
+extern char _bin_start;
+extern char _bin_end;
+
 static inline float sigmoid(float x){
     return static_cast<float>(1.f / (1.f + exp(-x)));
 }
@@ -222,8 +235,24 @@ void detect_object(const cv::Mat& im, std::vector<Object>& objects){
 //    yolov3_tiny.load_param("yolov3-tiny_train.param");
 //    yolov3_tiny.load_model("yolov3-tiny_train.bin");
 
-    yolov3_tiny.load_param("/home/PRJ/mycpu/ncnn/build/examples/yolov3-tiny_train_opt_int8.param");
-    yolov3_tiny.load_model("/home/PRJ/mycpu/ncnn/build/examples/yolov3-tiny_train_opt_int8.bin");
+//    yolov3_tiny.load_param("/home/PRJ/mycpu/ncnn/build/examples/yolov3-tiny_train_opt_int8.param");
+//    yolov3_tiny.load_model("/home/PRJ/mycpu/ncnn/build/examples/yolov3-tiny_train_opt_int8.bin");
+
+    int res = 0;
+
+    res = yolov3_tiny.load_param_mem((const char *)&_param_start);
+    if(res != 0){
+        printf("fail to load param\n");
+        return;
+    }
+    printf("load param successfully!\n");
+    res = yolov3_tiny.load_model((const unsigned char *)&_bin_start);
+    if(res != ((&_bin_end) - (&_bin_start))){
+        printf("fail to load bin\n");
+        return;
+    }
+    printf("load bin successfully!\n");
+
 
     const int target_size = 640;
     const float prob_threshold = 0.25f;
@@ -343,7 +372,16 @@ void detect_object(const cv::Mat& im, std::vector<Object>& objects){
         objects[i].rect.width = x1 - x0;
         objects[i].rect.height = y1 - y0;
     }
-    fprintf(stderr, "detect complete");
+    fprintf(stderr, "detect complete\n");
+
+}
+
+static void print_objects(const std::vector<Object>& objects){
+    for (size_t i = 0; i < objects.size(); i++) {
+        const Object& obj = objects[i];
+        fprintf(stderr, "%d = %.5f at %.2f %.2f %.2f x %.2f\n", obj.label, obj.prob,
+                obj.rect.x, obj.rect.y, obj.rect.width, obj.rect.height);
+    }
 }
 
 static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
@@ -395,29 +433,43 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
     cv::waitKey(0);
 }
 
-int main(int argc, char** argv)
+
+#define Log(format, ...) \
+  printf("\33[1;34m[%s,%d,%s] " format "\33[0m\n", __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+
+int main()
 {
-    printf("hello from ncnn!");
-    return 0;
-    if (argc != 2)
-    {
-        fprintf(stderr, "Usage: %s [imagepath]\n", argv[0]);
+    printf("hello from ncnn!\n");
+
+    int len1 = (&_img1_end) - (&_img1_start);
+
+    Log("len1=%d", len1);
+    cv::Mat m = cv::imread_from_mem((stbi_uc const *)&_img1_start, len1, 1);
+    printf("read image1 complete\n");
+    if(m.empty()){
+        printf("cv::imread failed\n");
         return -1;
     }
-
-    const char* imagepath = argv[1];
-
-    cv::Mat m = cv::imread(imagepath, 1);
-    if (m.empty())
-    {
-        fprintf(stderr, "cv::imread %s failed\n", imagepath);
-        return -1;
-    }
+    printf("cv.imread success, (c,h,w)=(%d, %d %d) \n", m.c, m.rows, m.cols);
 
     std::vector<Object> objects;
     detect_object(m, objects);
-
-    draw_objects(m, objects);
+    print_objects(objects);
+//    draw_objects(m, objects);
 
     return 0;
+
+//     cv::Mat m = cv::imread(imagepath, 1);
+//     if (m.empty())
+//     {
+//         fprintf(stderr, "cv::imread %s failed\n", imagepath);
+//         return -1;
+//     }
+//
+//     std::vector<Object> objects;
+//     detect_object(m, objects);
+//
+//     draw_objects(m, objects);
+
+//     return 0;
 }

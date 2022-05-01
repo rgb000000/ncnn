@@ -389,6 +389,9 @@ typedef struct
 // 8-bits-per-channel interface
 //
 
+#define Log(format, ...) \
+  printf("\33[1;34m[%s,%d,%s] " format "\33[0m\n", __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+
 STBIDEF stbi_uc *stbi_load_from_memory   (stbi_uc           const *buffer, int len   , int *x, int *y, int *channels_in_file, int desired_channels);
 STBIDEF stbi_uc *stbi_load_from_callbacks(stbi_io_callbacks const *clbk  , void *user, int *x, int *y, int *channels_in_file, int desired_channels);
 
@@ -1368,8 +1371,10 @@ STBIDEF stbi_us *stbi_load_16_from_callbacks(stbi_io_callbacks const *clbk, void
 
 STBIDEF stbi_uc *stbi_load_from_memory(stbi_uc const *buffer, int len, int *x, int *y, int *comp, int req_comp)
 {
+   Log();
    stbi__context s;
    stbi__start_mem(&s,buffer,len);
+   Log();
    return stbi__load_and_postprocess_8bit(&s,x,y,comp,req_comp);
 }
 
