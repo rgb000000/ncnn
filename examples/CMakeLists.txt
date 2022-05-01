@@ -3,17 +3,17 @@ macro(ncnn_add_example name)
 
     target_link_options(
             ${name} PUBLIC
+
+            #/home/PRJ/mycpu/ncnn_link/files_x86.o
+
             -nostartfiles
             -T /home/PRJ/mycpu/newlib_test/internal.ld
             --static
             -fno-use-cxa-atexit
             -Wl,--gc-sections
-            /home/PRJ/mycpu/newlib_test/mycrt0.o
-            /home/PRJ/mycpu/newlib_test/stubs.o
-            # -L/opt/rv64ima/lib/gcc/riscv64-unknown-elf/11.1.0
-            # -L/opt/rv64ima/riscv64-unknown-elf/lib
-            # -L../src
-            # -Wl,--verbose
+            /home/PRJ/mycpu/cxx_test/mycrt0.o
+            /home/PRJ/mycpu/cxx_test/stubs.o
+            /home/PRJ/mycpu/cxx_test/files.o
     )
 
     if(OpenCV_FOUND)
