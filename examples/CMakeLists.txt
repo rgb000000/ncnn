@@ -1,5 +1,21 @@
 macro(ncnn_add_example name)
     add_executable(${name} ${name}.cpp)
+
+    target_link_options(
+            ${name} PUBLIC
+            -nostartfiles
+            -T /home/PRJ/mycpu/newlib_test/internal.ld
+            --static
+            -fno-use-cxa-atexit
+            -Wl,--gc-sections
+            /home/PRJ/mycpu/newlib_test/mycrt0.o
+            /home/PRJ/mycpu/newlib_test/stubs.o
+            # -L/opt/rv64ima/lib/gcc/riscv64-unknown-elf/11.1.0
+            # -L/opt/rv64ima/riscv64-unknown-elf/lib
+            # -L../src
+            # -Wl,--verbose
+    )
+
     if(OpenCV_FOUND)
         target_include_directories(${name} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${name} PRIVATE ncnn ${OpenCV_LIBS})
@@ -63,6 +79,7 @@ if(NCNN_PIXEL)
         ncnn_add_example(nanodetplus_pnnx)
         ncnn_add_example(scrfd)
         ncnn_add_example(scrfd_crowdhuman)
+        ncnn_add_example(yolov3-tiny)
         if(OpenCV_FOUND)
             ncnn_add_example(yolov4)
             ncnn_add_example(rvm)
