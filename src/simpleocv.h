@@ -23,6 +23,7 @@
 #include <string.h>
 #include "allocator.h"
 #include "mat.h"
+#include "stb_image.h"
 
 #if defined(_MSC_VER) || defined(__GNUC__)
 #pragma push_macro("min")
@@ -447,6 +448,7 @@ enum ImreadModes
 };
 
 NCNN_EXPORT Mat imread(const std::string& path, int flags = IMREAD_COLOR);
+NCNN_EXPORT Mat imread_from_mem(const stbi_uc* buffer, int len, int flags);
 
 enum ImwriteFlags
 {

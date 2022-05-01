@@ -29,6 +29,9 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
+#define Log(format, ...) \
+  printf("\33[1;34m[%s,%d,%s] " format "\33[0m\n", __FILE__, __LINE__, __func__, ## __VA_ARGS__)
+
 namespace cv {
 
 Mat imread(const std::string& path, int flags)
@@ -61,6 +64,115 @@ Mat imread(const std::string& path, int flags)
         // load failed
         return Mat();
     }
+
+    if (desired_channels)
+    {
+        c = desired_channels;
+    }
+
+    // copy pixeldata to Mat
+    Mat img;
+    if (c == 1)
+    {
+        img.create(h, w, CV_8UC1);
+    }
+    else if (c == 3)
+    {
+        img.create(h, w, CV_8UC3);
+    }
+    else if (c == 4)
+    {
+        img.create(h, w, CV_8UC4);
+    }
+    else
+    {
+        // unexpected channels
+        stbi_image_free(pixeldata);
+        return Mat();
+    }
+
+    memcpy(img.data, pixeldata, w * h * c);
+
+    stbi_image_free(pixeldata);
+
+    //     // resolve exif orientation
+    //     {
+    //         std::ifstream ifs;
+    //         ifs.open(filename.c_str(), std::ifstream::in);
+    //
+    //         if (ifs.good())
+    //         {
+    //             ExifReader exif_reader(ifs);
+    //             if (exif_reader.parse())
+    //             {
+    //                 ExifEntry_t e = exif_reader.getTag(ORIENTATION);
+    //                 int orientation = e.field_u16;
+    //                 if (orientation >= 1 && orientation <= 8)
+    //                     rotate_by_orientation(img, img, orientation);
+    //             }
+    //         }
+    //
+    //         ifs.close();
+    //     }
+
+    // rgb to bgr
+    if (c == 3)
+    {
+        uchar* p = img.data;
+        for (int i = 0; i < w * h; i++)
+        {
+            std::swap(p[0], p[2]);
+            p += 3;
+        }
+    }
+    if (c == 4)
+    {
+        uchar* p = img.data;
+        for (int i = 0; i < w * h; i++)
+        {
+            std::swap(p[0], p[2]);
+            p += 4;
+        }
+    }
+
+    return img;
+}
+
+Mat imread_from_mem(stbi_uc const *buffer, int len, int flags)
+{
+    int desired_channels = 0;
+    if (flags == IMREAD_UNCHANGED)
+    {
+        desired_channels = 0;
+    }
+    else if (flags == IMREAD_GRAYSCALE)
+    {
+        desired_channels = 1;
+    }
+    else if (flags == IMREAD_COLOR)
+    {
+        desired_channels = 3;
+    }
+    else
+    {
+        // unknown flags
+        return Mat();
+    }
+
+    int w;
+    int h;
+    int c;
+
+    Log();
+    unsigned char* pixeldata = stbi_load_from_memory(buffer, len, &w, &h, &c, desired_channels);
+    Log();
+    if (!pixeldata)
+    {
+        Log();
+        // load failed
+        return Mat();
+    }
+    Log();
 
     if (desired_channels)
     {
